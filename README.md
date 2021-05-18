@@ -1,2 +1,2 @@
-# DecaMoveUnitySDK
-DecaMove Unity SDK
+# DecaMoveSDK
+DecaMove SDK
