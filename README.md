@@ -7,6 +7,9 @@ The DecaMove SDK allows for native support for the DecaMove to be intigrated int
   <img src="https://img.shields.io/github/v/release/MegadodoGames/DecaMoveSDK" alt= "Latest release"/>
 </a>
 
+# Documentation
+<a href="https://github.com/MegadodoGames/DecaMoveSDK/wiki">Wiki</a>
+
 # Limitations
 There is currently only a Unity and Native SDK, but the Native SDK should work for Unreal.
 Currently the SDK only supports the DecaMove device itself and not emultated devices such as phones or SteamVR trackers.
