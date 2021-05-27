@@ -1,6 +1,6 @@
 # DecaMoveSDK
 
-The DecaMove SDK allows for native support for the DecaMove to be intigrated into projects directally. This allows for creators to take advantage of the rotation, button, and haptics of the DecaMove device.
+The DecaMove SDK allows for native support for the DecaMove to be intigrated into projects directally. This allows for creators to take advantage of the rotation, button, and haptics of the DecaMove device. This branch contains example projects that need more validation.
 
 ## Latest Release:
 <a href="https://github.com/MegadodoGames/DecaMoveSDK/releases/tag/1.0.0">   
