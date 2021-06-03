@@ -5,6 +5,10 @@ using DecaSDK.Unity;
 
 public class DecaMoveOverlay : MonoBehaviour
 {
+    private GameObject DecaMoveCalibration;
+    private GameObject _decaMoveCalibrationInstance;
+    private bool _isImuCalibrationRequested;
+
     private SharedDisposable<SharedMove> _decaMove;
     private DecaSDK.Move.State _decaMoveState;
     private bool _isDecaMoveSleeping;
@@ -14,6 +18,18 @@ public class DecaMoveOverlay : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        DecaMoveCalibration = Resources.Load<GameObject>("DecaMoveCalibration/DecaMoveCalibrationAnimation");
+        if (DecaMoveCalibration == null)
+        {
+            Debug.LogError("Failed to load DecaMoveCalibration prefab");
+        }
+        else
+        {
+            Debug.Log("DecaMoveCalibration prefab has been loaded");
+        }
+
+        _isImuCalibrationRequested = false;
+
         _spriteRenderer = GetComponent<SpriteRenderer>();
 
         transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
@@ -24,7 +40,7 @@ public class DecaMoveOverlay : MonoBehaviour
         try
         {
             _decaMove = SharedMove.Instance;
-            _decaMove.Value.AddCallbacks(OnDecaMoveFeedback, null, OnDecaMoveOrientationUpdate, null, OnDecaMoveStateUpdate, null);
+            _decaMove.Value.AddCallbacks(OnDecaMoveFeedback, null, OnDecaMoveOrientationUpdate, null, OnDecaMoveStateUpdate, OnDecaMoveImuCalibrationRequest, null);
         }
         catch (DecaSDK.Move.NativeCallFailedException e)
         {
@@ -41,8 +57,11 @@ public class DecaMoveOverlay : MonoBehaviour
         bool isDecaMoveSleeping;
         Quaternion overlayRotation;
         DecaSDK.Move.State decaMoveState;
+        bool isImuCalibrationRequested;
         lock (this)
         {
+            isImuCalibrationRequested = _isImuCalibrationRequested;
+            _isImuCalibrationRequested = false;
             isDecaMoveSleeping = _isDecaMoveSleeping;
             overlayRotation = _overlayRotation;
             decaMoveState = _decaMoveState;
@@ -63,6 +82,34 @@ public class DecaMoveOverlay : MonoBehaviour
         else
         {
             _spriteRenderer.enabled = false;
+        }
+
+        if (isImuCalibrationRequested &&
+            _decaMoveCalibrationInstance == null &&
+            DecaMoveCalibration != null)
+        {
+            _decaMoveCalibrationInstance = Instantiate(DecaMoveCalibration);
+            _decaMove.Value.StartImuCalibration();
+        }
+
+        if (_decaMoveCalibrationInstance != null)
+        {
+            bool isStopRequested = Input.GetKeyDown(KeyCode.S);
+            bool isAbortRequested = Input.GetKeyDown(KeyCode.A);
+            if (isStopRequested || isAbortRequested)
+            {
+                if (isStopRequested)
+                {
+                    _decaMove.Value.StopImuCalibration();
+                }
+                else
+                {
+                    _decaMove.Value.AbortImuCalibration();
+                }
+
+                Destroy(_decaMoveCalibrationInstance);
+                _decaMoveCalibrationInstance = null;
+            }
         }
     }
     public static float SignedAngleFromTo(Vector2 a, Vector2 b)
@@ -111,6 +158,13 @@ public class DecaMoveOverlay : MonoBehaviour
         lock (this)
         {
             _decaMoveState = state;
+        }
+    }
+    void OnDecaMoveImuCalibrationRequest()
+    {
+        lock (this)
+        {
+            _isImuCalibrationRequested = true;
         }
     }
     void OnApplicationQuit()

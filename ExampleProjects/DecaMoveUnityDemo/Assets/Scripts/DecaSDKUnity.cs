@@ -107,6 +107,10 @@ namespace DecaSDK.Unity
                         if (OnStateUpdate != null) OnStateUpdate(state);
                     }
                 },
+                /* OnImuCalibrationRequest */ () =>
+                {
+                    lock (this) { if (OnImuCalibrationRequest != null) OnImuCalibrationRequest(); }
+                },
                 /* OnLogMessage */ (logLevel, message) =>
                 {
                     lock (this)
@@ -133,6 +137,7 @@ namespace DecaSDK.Unity
                                  Move.OnOrientationUpdateDelegate OnOrientationUpdate,
                                  Move.OnPositionUpdateDelegate OnPositionUpdate,
                                  Move.OnStateUpdateDelegate OnStateUpdate,
+                                 Move.OnImuCalibrationRequestDelegate OnImuCalibrationRequest,
                                  Move.OnLogMessage OnLogMessage)
         {
             lock (this)
@@ -142,6 +147,7 @@ namespace DecaSDK.Unity
                 if (OnOrientationUpdate != null) this.OnOrientationUpdate += OnOrientationUpdate;
                 if (OnPositionUpdate != null) this.OnPositionUpdate += OnPositionUpdate;
                 if (OnStateUpdate != null) this.OnStateUpdate += OnStateUpdate;
+                if (OnImuCalibrationRequest != null) this.OnImuCalibrationRequest += OnImuCalibrationRequest;
                 if (OnLogMessage != null) this.OnLogMessage += OnLogMessage;
 
                 if (OnStateUpdate != null)
@@ -154,9 +160,29 @@ namespace DecaSDK.Unity
         {
             _move.SendHaptic();
         }
+        public void StopHaptic()
+        {
+            _move.StopHaptic();
+        }
+        public void SendBlink(int durationSeconds, int frequency)
+        {
+            _move.SendBlink(durationSeconds, frequency);
+        }
         public void Calibrate(float forwardX, float forwardY)
         {
             _move.Calibrate(forwardX, forwardY);
+        }
+        public void StartImuCalibration()
+        {
+            _move.StartImuCalibration();
+        }
+        public void StopImuCalibration()
+        {
+            _move.StopImuCalibration();
+        }
+        public void AbortImuCalibration()
+        {
+            _move.AbortImuCalibration();
         }
 
         private Move.OnFeedbackDelegate OnFeedback;
@@ -164,6 +190,7 @@ namespace DecaSDK.Unity
         private Move.OnOrientationUpdateDelegate OnOrientationUpdate;
         private Move.OnPositionUpdateDelegate OnPositionUpdate;
         private Move.OnStateUpdateDelegate OnStateUpdate;
+        private Move.OnImuCalibrationRequestDelegate OnImuCalibrationRequest;
         private Move.OnLogMessage OnLogMessage;
 
         private Move.State _moveState = Move.State.Closed;
@@ -176,10 +203,10 @@ namespace DecaSDK.Unity
         public static UnityEngine.Quaternion ToUnity(this Move.Quaternion quat)
         {
             return new UnityEngine.Quaternion(
-                quat.y,
                 quat.x,
-                quat.z,
-                quat.w
+                quat.w,
+                quat.y,
+                quat.z
             ) * UnityEngine.Quaternion.Euler(-90, 0, 0);
         }
     }

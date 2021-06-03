@@ -55,7 +55,7 @@ public class Cube : MonoBehaviour
                         _rotation = Quaternion.Euler(0, calibration * Mathf.Rad2Deg, 0) * quat.ToUnity();
                     }
                 },
-                null, null, null);
+                null, null, null, null);
         }
         catch (DecaSDK.Move.NativeCallFailedException e)
         {

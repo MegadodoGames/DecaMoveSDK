@@ -10,6 +10,7 @@ public class ServiceController : MonoBehaviour
     private Vector3 _decaMovePosition;
     private Camera _camera;
     private MeshRenderer _meshRenderer;
+    private float _batteryCharge = 0;
 
     private void Start()
     {
@@ -30,7 +31,7 @@ public class ServiceController : MonoBehaviour
         try
         {
             _decaMove = SharedMove.Instance;
-            _decaMove.Value.AddCallbacks(OnDecaMoveFeedback, OnDecaMoveBatteryUpdate, OnDecaMoveOrientationUpdate, OnDecaMovePositionUpdate, OnDecaMoveStateUpdate, OnDecaMoveLogMessage);
+            _decaMove.Value.AddCallbacks(OnDecaMoveFeedback, OnDecaMoveBatteryUpdate, OnDecaMoveOrientationUpdate, OnDecaMovePositionUpdate, OnDecaMoveStateUpdate, null, OnDecaMoveLogMessage);
         } catch (DecaSDK.Move.NativeCallFailedException e)
         {
             Debug.LogError($"Failed to initialize DecaMove: {e.Message}");
@@ -154,7 +155,14 @@ public class ServiceController : MonoBehaviour
     }
     void OnDecaMoveBatteryUpdate(float charge)
     {
-        Debug.Log($"Battery charge: {charge}");
+        lock (this)
+        {
+            if (_batteryCharge != charge)
+            {
+                _batteryCharge = charge;
+                Debug.Log($"Battery charge: {_batteryCharge}");
+            }
+        }
     }
     void OnDecaMoveOrientationUpdate(DecaSDK.Move.Quaternion quaternion, DecaSDK.Move.Accuracy accuracy, float yawCalibration)
     {

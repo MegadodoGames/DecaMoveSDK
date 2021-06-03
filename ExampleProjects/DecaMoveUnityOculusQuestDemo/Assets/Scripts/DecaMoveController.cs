@@ -27,7 +27,7 @@ public class DecaMoveController : MonoBehaviour
         try
         {
             _decaMove = SharedMove.Instance;
-            _decaMove.Value.AddCallbacks(OnDecaMoveFeedback, OnDecaMoveBatteryUpdate, OnDecaMoveOrientationUpdate, OnDecaMovePositionUpdate, OnDecaMoveStateUpdate, OnDecaMoveLogMessage);
+            _decaMove.Value.AddCallbacks(OnDecaMoveFeedback, OnDecaMoveBatteryUpdate, OnDecaMoveOrientationUpdate, OnDecaMovePositionUpdate, OnDecaMoveStateUpdate, null, OnDecaMoveLogMessage);
         }
         catch (DecaSDK.Move.NativeCallFailedException e)
         {
