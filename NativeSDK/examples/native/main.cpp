@@ -32,6 +32,9 @@ int main(int ac, char** av) {
         ((Context*)userData)->state = state;
         printf("State: %d\n", state);
     };
+    callbacks.imu_calibration_request_cb = [](void* userData) {
+        printf("IMU calibration has been requested\n");
+    };
     callbacks.user_data = &context;
 
     deca_move_env_desc envDesc = {};

@@ -4,7 +4,7 @@ if("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" LESS 2.5)
    message(FATAL_ERROR "CMake >= 2.6.0 required")
 endif()
 cmake_policy(PUSH)
-cmake_policy(VERSION 2.6...3.18)
+cmake_policy(VERSION 2.6)
 #----------------------------------------------------------------
 # Generated CMake target import file.
 #----------------------------------------------------------------
@@ -55,6 +55,7 @@ endif()
 add_library(DecaSDK::native SHARED IMPORTED)
 
 set_target_properties(DecaSDK::native PROPERTIES
+  INTERFACE_COMPILE_FEATURES "cxx_std_20"
   INTERFACE_INCLUDE_DIRECTORIES "${_IMPORT_PREFIX}/SDK/include/deca"
 )
 

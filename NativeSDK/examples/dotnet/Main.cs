@@ -32,11 +32,15 @@ namespace DecaSDK_Test
                     moveState = state;
                     Console.WriteLine($"Deca Move state: {state}");
                 };
+                DecaSDK.Move.OnImuCalibrationRequestDelegate OnImuCalibrationRequest = () =>
+                {
+                    Console.WriteLine("Deca Move requested IMU calibration");
+                };
                 DecaSDK.Move.OnLogMessage OnLogMessage = (logLevel, message) =>
                 {
                     Console.WriteLine(message);
                 };
-                using (var decaMove = new DecaSDK.Move(OnFeedback, OnBatteryUpdate, OnOrientationUpdate, OnPositionUpdate, OnStateUpdate, OnLogMessage))
+                using (var decaMove = new DecaSDK.Move(OnFeedback, OnBatteryUpdate, OnOrientationUpdate, OnPositionUpdate, OnStateUpdate, OnImuCalibrationRequest, OnLogMessage))
                 {
                     while (true)
                     {

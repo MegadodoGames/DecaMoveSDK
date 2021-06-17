@@ -108,6 +108,7 @@ typedef void (*deca_move_on_battery_update_callback_t)(float charge, void* user_
 typedef void (*deca_move_on_orientation_update_callback_t)(deca_move_quaternion, deca_move_accuracy, float yaw_drift, void* user_data);
 typedef void (*deca_move_on_position_update_callback_t)(float position_x, float position_y, float position_z, void* user_data);
 typedef void (*deca_move_on_state_update_callback_t)(deca_move_state, void* user_data);
+typedef void (*deca_move_on_imu_calibration_request_callback_t)(void* user_data);
 
 typedef struct {
     void* user_data;
@@ -126,6 +127,10 @@ typedef struct {
 
     /// See @ref deca_move_state.
     deca_move_on_state_update_callback_t state_update_cb;
+
+    /// Called by the deca move when it detects the need of IMU calibration.
+    /// See @ref decaMoveStartImuCalibration for more information.
+    deca_move_on_imu_calibration_request_callback_t imu_calibration_request_cb;
 } deca_move_callbacks;
 #pragma pack(pop)
 
@@ -174,6 +179,27 @@ DECA_SDK_API deca_move_status decaMoveSendBlink(deca_move deca_move, int duratio
  *  @param deca_move            Pointer to the Deca Move object created with @ref decaMoveInit.
  */
 DECA_SDK_API deca_move_status decaMoveCalibrate(deca_move deca_move, float forwardX, float forwardY);
+
+/** @brief Starts inertial measurement unit (IMU) calibration process.
+ *
+ *  To calibrate the DecaMove, you will need to rotate it ~180° and back to the beginning position in each axis (pitch, yaw, roll).
+ *  To stop calibration process use either @ref decaMoveStopImuCalibration or @ref decaMoveAbortImuCalibration.
+ *
+ *  @param deca_move            Pointer to the Deca Move object created with @ref decaMoveInit.
+ */
+DECA_SDK_API deca_move_status decaMoveStartImuCalibration(deca_move deca_move);
+
+/** @brief Stops IMU calibration process and saves calibration results.
+ *
+ *  @param deca_move            Pointer to the Deca Move object created with @ref decaMoveInit.
+ */
+DECA_SDK_API deca_move_status decaMoveStopImuCalibration(deca_move deca_move);
+
+/** @brief Stops IMU calibration process and discards calibration results.
+ *
+ *  @param deca_move            Pointer to the Deca Move object created with @ref decaMoveInit.
+ */
+DECA_SDK_API deca_move_status decaMoveAbortImuCalibration(deca_move deca_move);
 
 /** @brief Release the Deca Move device
  *

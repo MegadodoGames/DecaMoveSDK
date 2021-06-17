@@ -1,0 +1,28 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "Deca Move SDK",
+	"Description": "SDK for the DecaMove",
+	"Category": "Virtual Reality",
+	"CreatedBy": "Megadodo",
+	"CreatedByURL": "",
+	"DocsURL": "https://github.com/MegadodoGames/DecaMoveSDK/wiki",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"EngineVersion": "4.26.0",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "DecaMoveSDK",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"WhitelistPlatforms": [
+				"Win64",
+				"Win32"
+			]
+		}
+	]
+}

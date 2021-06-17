@@ -101,6 +101,13 @@ namespace DecaSDK
         }
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate void on_imu_calibration_request_callback(IntPtr handle);
+        private static void OnImuCalibrationRequestWrap(IntPtr handle)
+        {
+            (GCHandle.FromIntPtr(handle).Target as Move)._onImuCalibrationRequest();
+        }
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         private delegate void log_callback(LogLevel logLevel, string logMessage, IntPtr handle);
         private static void LogCallbackWrap(LogLevel logLevel, string logMessage, IntPtr handle)
         {
@@ -116,6 +123,7 @@ namespace DecaSDK
             public orientation_update_callback orientation_update_cb;
             public position_update_callback position_update_cb;
             public on_state_callback state_update_cb;
+            public on_imu_calibration_request_callback imu_calibration_request_cb;
         };
 
         private const UInt32 kDecaMoveEnvComLib = 1 << 0;
@@ -136,7 +144,17 @@ namespace DecaSDK
         [DllImport("deca_sdk")]
         private static extern int decaMoveSendHaptic(IntPtr decaMove);
         [DllImport("deca_sdk")]
+        private static extern int decaMoveStopHaptic(IntPtr decaMove);
+        [DllImport("deca_sdk")]
+        private static extern int decaMoveSendBlink(IntPtr decaMove, int durationSeconds, int frequency);
+        [DllImport("deca_sdk")]
         private static extern int decaMoveCalibrate(IntPtr decaMove, float forwardX, float forwardY);
+        [DllImport("deca_sdk")]
+        private static extern int decaMoveStartImuCalibration(IntPtr decaMove);
+        [DllImport("deca_sdk")]
+        private static extern int decaMoveStopImuCalibration(IntPtr decaMove);
+        [DllImport("deca_sdk")]
+        private static extern int decaMoveAbortImuCalibration(IntPtr decaMove);
         [DllImport("deca_sdk")]
         private static extern void decaMoveRelease(IntPtr decaMove);
 
@@ -145,6 +163,7 @@ namespace DecaSDK
         public delegate void OnOrientationUpdateDelegate(Quaternion quaternion, Accuracy accuracy, float yawDrift);
         public delegate void OnPositionUpdateDelegate(float x, float y, float z);
         public delegate void OnStateUpdateDelegate(State state);
+        public delegate void OnImuCalibrationRequestDelegate();
         public delegate void OnLogMessage(LogLevel logLevel, string msg);
 
         private OnFeedbackDelegate _onFeedback;
@@ -152,6 +171,7 @@ namespace DecaSDK
         private OnOrientationUpdateDelegate _onOrientationUpdate;
         private OnPositionUpdateDelegate _onPositionUpdate;
         private OnStateUpdateDelegate _onStateUpdate;
+        private OnImuCalibrationRequestDelegate _onImuCalibrationRequest;
         private OnLogMessage _onLogMessage;
 
         public Move(OnFeedbackDelegate onFeedback,
@@ -159,6 +179,7 @@ namespace DecaSDK
                     OnOrientationUpdateDelegate onOrientationUpdate,
                     OnPositionUpdateDelegate onPositionUpdate,
                     OnStateUpdateDelegate onStateUpdate,
+                    OnImuCalibrationRequestDelegate onImuCalibrationRequest,
                     OnLogMessage onLogMessage)
         {
             _onFeedback = onFeedback;
@@ -166,6 +187,7 @@ namespace DecaSDK
             _onOrientationUpdate = onOrientationUpdate;
             _onPositionUpdate = onPositionUpdate;
             _onStateUpdate = onStateUpdate;
+            _onImuCalibrationRequest = onImuCalibrationRequest;
             _onLogMessage = onLogMessage;
 
             _callbackHandle = GCHandle.Alloc(this);
@@ -176,6 +198,7 @@ namespace DecaSDK
             if (_onOrientationUpdate != null) { _callbacks.orientation_update_cb = OnOrientationUpdateWrap; }
             if (_onPositionUpdate != null) { _callbacks.position_update_cb = OnPositionUpdateWrap; }
             if (_onStateUpdate != null) { _callbacks.state_update_cb = OnStateUpdateWrap; }
+            if (_onImuCalibrationRequest != null) { _callbacks.imu_calibration_request_cb = OnImuCalibrationRequestWrap; }
 
             _envDesc = new deca_move_env_desc();
             _envDesc.flags = kDecaMoveEnvComLib;
@@ -200,11 +223,30 @@ namespace DecaSDK
         {
             HandleNativeCall(decaMoveSendHaptic(_decaMove));
         }
+        public void StopHaptic()
+        {
+            HandleNativeCall(decaMoveStopHaptic(_decaMove));
+        }
+        public void SendBlink(int durationSeconds, int frequency)
+        {
+            HandleNativeCall(decaMoveSendBlink(_decaMove, durationSeconds, frequency));
+        }
         public void Calibrate(float forwardX, float forwardY)
         {
             HandleNativeCall(decaMoveCalibrate(_decaMove, forwardX, forwardY));
         }
-
+        public void StartImuCalibration()
+        {
+            HandleNativeCall(decaMoveStartImuCalibration(_decaMove));
+        }
+        public void StopImuCalibration()
+        {
+            HandleNativeCall(decaMoveStopImuCalibration(_decaMove));
+        }
+        public void AbortImuCalibration()
+        {
+            HandleNativeCall(decaMoveAbortImuCalibration(_decaMove));
+        }
         private void HandleNativeCall(int nativeStatus)
         {
             var status = (Status)nativeStatus;
