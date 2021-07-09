@@ -39,9 +39,16 @@ ATestTopDownCharacter::ATestTopDownCharacter()
 	// Create DecaMove device
 	DecaMove = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DecaMove"));
 	DecaMove->SetupAttachment(RootComponent);
-	UStaticMesh* cubeMesh = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Engine/BasicShapes/Cube.Cube'")).Object;
-	DecaMove->SetStaticMesh(cubeMesh);
+	UStaticMesh* decaMoveMesh = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Game/TopDownCPP/DecaMoveGameModel/Decamove_game_model.Decamove_game_model'")).Object;
+	DecaMove->SetStaticMesh(decaMoveMesh);
 	DecaMove->SetRelativeLocation(FVector(0.0f, 0.0f, 100.0f));
+
+	// Create testing cube
+	TestingCube = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TestingCube"));
+	TestingCube->SetupAttachment(RootComponent);
+	UStaticMesh* testingCubeMesh = ConstructorHelpers::FObjectFinder<UStaticMesh>(TEXT("StaticMesh'/Game/TopDownCPP/TestingCube/cube.cube'")).Object;
+	TestingCube->SetStaticMesh(testingCubeMesh);
+	TestingCube->SetRelativeLocation(FVector(-100.0f, -100.0f, 100.0f));
 
 	_decaMove = nullptr;
 	_quaternion = FQuat();
@@ -85,11 +92,16 @@ void ATestTopDownCharacter::BeginPlay() {
 	};
 	decaMoveCallbacks.orientation_update_cb = [](deca_move_quaternion quaternion, deca_move_accuracy accuracy, float yawDrift, void* userData) {
 		ATestTopDownCharacter* self = (ATestTopDownCharacter*)userData;
+		auto q = FRotator(0, FMath::RadiansToDegrees(yawDrift), 0).Quaternion() * decaMoveToUE(quaternion);
 		std::lock_guard<std::mutex> lock(self->_mutex);
-		self->_quaternion = FQuat(quaternion.x, quaternion.y, quaternion.z, quaternion.w);
+		self->_quaternion = q;
 	};
     deca_move_env_desc envDesc = {};
     envDesc.flags = kDecaMoveEnvComLib;
+	envDesc.log_callback = [](deca_move_env_log_level logLevel, const char* message, void* userData) {
+		FString s(message);
+		UE_LOG(LogActor, Error, TEXT("%s"), *s);
+	};
 	deca_move_status status = decaMoveInit(envDesc, decaMoveCallbacks, &_decaMove);
 	UE_LOG(LogActor, Error, TEXT("decaMoveInit: %d"), int(status));
 }
@@ -126,5 +138,24 @@ void ATestTopDownCharacter::Tick(float DeltaSeconds)
 	}
 
 	std::lock_guard<std::mutex> lock(_mutex);
-	DecaMove->SetRelativeRotation(_quaternion);
+
+	{
+		FRotator modelRotation(-90, 0, 0);
+		DecaMove->SetRelativeRotation(_quaternion * modelRotation.Quaternion());
+	}
+
+	{
+		FVector modelScale(1, -1, 1);
+		FRotator modelRotation(0, 90, -90);
+
+		auto rotation = _quaternion * modelRotation.Quaternion();
+		rotation.Normalize();
+
+		TestingCube->SetRelativeRotation(rotation);
+		TestingCube->SetRelativeScale3D(modelScale);
+	}
+}
+
+void ATestTopDownCharacter::Calibrate() {
+	decaMoveCalibrate(_decaMove, 0.0f, 1.0f);
 }

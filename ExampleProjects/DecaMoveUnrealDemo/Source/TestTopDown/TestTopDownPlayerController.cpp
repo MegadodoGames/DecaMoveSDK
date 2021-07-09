@@ -37,11 +37,19 @@ void ATestTopDownPlayerController::SetupInputComponent()
 	InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &ATestTopDownPlayerController::MoveToTouchLocation);
 
 	InputComponent->BindAction("ResetVR", IE_Pressed, this, &ATestTopDownPlayerController::OnResetVR);
+
+	InputComponent->BindAction("Calibrate", IE_Pressed, this, &ATestTopDownPlayerController::OnCalibrate);
 }
 
 void ATestTopDownPlayerController::OnResetVR()
 {
 	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
+}
+
+void ATestTopDownPlayerController::OnCalibrate() {
+	if (ATestTopDownCharacter* MyPawn = Cast<ATestTopDownCharacter>(GetPawn())) {
+		MyPawn->Calibrate();
+	}
 }
 
 void ATestTopDownPlayerController::MoveToMouseCursor()

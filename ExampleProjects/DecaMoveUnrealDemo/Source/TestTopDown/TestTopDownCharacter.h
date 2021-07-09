@@ -3,6 +3,7 @@
 #pragma once
 
 #include "deca/move.h"
+#include "deca/unreal.h"
 
 #include <mutex>
 
@@ -29,6 +30,8 @@ public:
 	/** Returns CursorToWorld subobject **/
 	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
 
+	void Calibrate();
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -48,6 +51,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UStaticMeshComponent* DecaMove;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UStaticMeshComponent* TestingCube;
 
 private:
 	deca_move _decaMove;

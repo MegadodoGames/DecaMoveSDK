@@ -10,6 +10,8 @@ public class DecaMoveController : MonoBehaviour
     private Vector3 _decaMovePosition;
     private MeshRenderer _meshRenderer;
 
+    private float _prevHapticTime = 0;
+
     private void Start()
     {
         _decaMoveState = DecaSDK.Move.State.Closed;
@@ -94,14 +96,29 @@ public class DecaMoveController : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            try
+            DoHaptic(true);
+        }
+        DoHaptic(false);
+    }
+    private void DoHaptic(bool force)
+    {
+        if (!force)
+        {
+            float timeSinceLastHaptic = Time.time - _prevHapticTime;
+            if (timeSinceLastHaptic < 3)
             {
-                _decaMove.Value.SendHaptic();
+                return;
             }
-            catch (DecaSDK.Move.NativeCallFailedException e)
-            {
-                Debug.LogError($"Failed to send haptic: {e.Message}");
-            }
+        }
+
+        try
+        {
+            _decaMove.Value.SendHaptic();
+            _prevHapticTime = Time.time;
+        }
+        catch (DecaSDK.Move.NativeCallFailedException e)
+        {
+            Debug.LogError($"Failed to send haptic: {e.Message}");
         }
     }
     private void ProcessCalibration()

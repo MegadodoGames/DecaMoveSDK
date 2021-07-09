@@ -26,6 +26,8 @@ protected:
 	/** Resets HMD orientation in VR. */
 	void OnResetVR();
 
+	void OnCalibrate();
+
 	/** Navigate player to the current mouse cursor location. */
 	void MoveToMouseCursor();
 

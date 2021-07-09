@@ -28,7 +28,7 @@ public class DecaMoveOverlay : MonoBehaviour
             Debug.Log("DecaMoveCalibration prefab has been loaded");
         }
 
-        _isImuCalibrationRequested = true;
+        _isImuCalibrationRequested = false;
 
         _spriteRenderer = GetComponent<SpriteRenderer>();
 
@@ -89,7 +89,14 @@ public class DecaMoveOverlay : MonoBehaviour
             DecaMoveCalibration != null)
         {
             _decaMoveCalibrationInstance = Instantiate(DecaMoveCalibration);
-            _decaMove.Value.StartImuCalibration();
+            try
+            {
+                _decaMove.Value.StartImuCalibration();
+            }
+            catch (DecaSDK.Move.NativeCallFailedException e)
+            {
+                Debug.Log(e);
+            }
         }
 
         if (_decaMoveCalibrationInstance != null)

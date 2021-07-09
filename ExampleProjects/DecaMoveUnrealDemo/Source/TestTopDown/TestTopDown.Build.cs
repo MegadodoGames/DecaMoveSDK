@@ -13,7 +13,7 @@ public class TestTopDown : ModuleRules
 
         // Include DecaSDK
         var DecaRoot = Path.Combine(ModuleDirectory, "..\\..\\..\\..");
-        var DecaSDKDirectory = Path.Combine(DecaRoot, "build", "_package");
+        var DecaSDKDirectory = Path.Combine(DecaRoot, "build", "_package", "SDK");
 		PublicIncludePaths.Add(Path.Combine(DecaSDKDirectory, "include"));
 		PublicAdditionalLibraries.Add(Path.Combine(DecaSDKDirectory, "lib", "deca_sdk.lib"));
 	}
