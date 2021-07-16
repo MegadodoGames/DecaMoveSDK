@@ -101,7 +101,6 @@ namespace DecaSDK
                     lock (this)
                     {
                         _rotation = quaternion.ToUnity();
-                        Debug.Log(_rotation);
                         _yOffset = yawCalibration;
                         _accuracy = accuracy;
                     }
@@ -129,9 +128,9 @@ namespace DecaSDK
         private void Update()
         {
             if (!onlyRotateY)
-                transform.rotation = Quaternion.AngleAxis(Mathf.Rad2Deg * _yOffset, Vector3.up) * _rotation;
+                transform.localRotation = Quaternion.AngleAxis(Mathf.Rad2Deg * _yOffset, Vector3.up) * _rotation;
             else 
-                transform.rotation = Quaternion.AngleAxis(Mathf.Rad2Deg * _yOffset, Vector3.up) * yRotation;
+                transform.localRotation = Quaternion.AngleAxis(Mathf.Rad2Deg * _yOffset, Vector3.up) * yRotation;
 
             if (updatePositon)
                 transform.position = Quaternion.AngleAxis(Mathf.Rad2Deg * _yOffset, Vector3.up) * _position;
@@ -198,7 +197,11 @@ namespace DecaSDK
         {
             try
             {
-                decaMove.Calibrate(head.forward.x, head.forward.y);
+                Quaternion parentRotationOffset = Quaternion.identity;
+                if (transform.parent)
+                    parentRotationOffset = Quaternion.Inverse(transform.parent.rotation);
+                Vector3 headForward = parentRotationOffset * head.forward;
+                decaMove.Calibrate(headForward.x, headForward.z);
             }
             catch (DecaSDK.Move.NativeCallFailedException e)
             {
