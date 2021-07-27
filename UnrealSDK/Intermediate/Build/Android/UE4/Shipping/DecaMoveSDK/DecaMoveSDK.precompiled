@@ -1,0 +1,8 @@
+{
+	"OutputFiles": [
+		"Module.DecaMoveSDK.cppa7.o",
+		"Module.DecaMoveSDK.cppa8.o",
+		"Module.DecaMoveSDK.gen.cppa7.o",
+		"Module.DecaMoveSDK.gen.cppa8.o"
+	]
+}

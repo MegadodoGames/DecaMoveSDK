@@ -21,8 +21,8 @@ void EmptyLinkFunctionForGeneratedCodeDecaMoveSDK_init() {}
 				nullptr,
 				0,
 				PKG_CompiledIn | 0x00000000,
-				0x90BDDD82,
-				0x23C2A3B1,
+				0xE88998A6,
+				0x1CA3D093,
 				METADATA_PARAMS(nullptr, 0)
 			};
 			UE4CodeGen_Private::ConstructUPackage(ReturnPackage, PackageParams);

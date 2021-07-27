@@ -5,46 +5,41 @@
 #include "Modules/ModuleManager.h"
 #include "Math/UnrealMathUtility.h"
 #include "Interfaces/IPluginManager.h"
-#include "DecaMoveSDKLibrary/include/move.h"
 
 #define LOCTEXT_NAMESPACE "FDecaMoveSDKModule"
+
+FDecaMoveSDKModule::MoveContext FDecaMoveSDKModule::_moveContext;
+void* FDecaMoveSDKModule::DecaMoveLibraryHandle = nullptr;
+deca_move FDecaMoveSDKModule::move;
 
 void FDecaMoveSDKModule::StartupModule()
 {
 }
 
-void FDecaMoveSDKModule::LinkDll()
+void FDecaMoveSDKModule::StartSDK()
 {
-	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-#if PLATFORM_WINDOWS
-
 	// Get the base directory of this plugin
-	FString BaseDir = IPluginManager::Get().FindPlugin("DecaMoveSDK")->GetBaseDir();
 
+#ifdef PLATFORM_WINDOWS
+
+	FString BaseDir = IPluginManager::Get().FindPlugin("DecaMoveSDK")->GetBaseDir();
 	// Add on the relative location of the third party dll and load it
 	FString LibraryPath;
     LibraryPath = FPaths::Combine(*BaseDir, TEXT("Binaries/Win64/deca_sdk.dll"));
 
     UE_LOG(LogTemp, Display, TEXT("Loading DecaMoveSDK"));
 	DecaMoveLibraryHandle = !LibraryPath.IsEmpty() ? FPlatformProcess::GetDllHandle(*LibraryPath) : nullptr;
-	if (DecaMoveLibraryHandle)
-	{
-		
-        try
-        {
-            SetupMove();
-        }
-        catch (const std::exception& e)
-        {
-            UE_LOG(LogTemp, Error, TEXT("Failed to intialize deca move library, exception was thrown "), *e.what());
-        }
-        
-	}
-	else
-	{
-		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("ThirdPartyLibraryError", "Failed to load deca move library"));
-	}
-#endif // PLATFORM_WINDOWS
+#endif 
+
+
+    try
+    {
+        SetupMove();
+}
+    catch (const std::exception& e)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to intialize deca move library, exception was thrown"), *e.what());
+    }
 }
 
 
@@ -52,33 +47,27 @@ void FDecaMoveSDKModule::ShutdownModule()
 {
 }
 
-void FDecaMoveSDKModule::ReleaseDll()
+void FDecaMoveSDKModule::ReleaseSDK()
 {
-#if PLATFORM_WINDOWS
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
     UE_LOG(LogTemp, Display, TEXT("Unloading DecaMoveSDK"));
-
-    // Clean up the move
     CleanUpMove();
 
+#ifdef PLATFORM_WINDOWS
 	// Free the dll handle
 	FPlatformProcess::FreeDllHandle(DecaMoveLibraryHandle);
 	DecaMoveLibraryHandle = nullptr;
-#endif // PLATFORM_WINDOWS
+#endif
 }
 
-FDecaMoveSDKModule::MoveContext FDecaMoveSDKModule::_moveContext;
-void* FDecaMoveSDKModule::DecaMoveLibraryHandle = nullptr;
-deca_move FDecaMoveSDKModule::move;
+
 
 void FDecaMoveSDKModule::SetupMove()
 {
-
     deca_move_callbacks callbacks = {};
     callbacks.feedback_cb = [](deca_move_feedback feedback, void* userData)
     {
         MoveContext* ctx = ((MoveContext*)userData);
+        ctx->lock.lock();
         UE_LOG(LogTemp, Log, TEXT("Feedback: %d\n"), int(feedback));
         switch (feedback)
         {
@@ -100,6 +89,7 @@ void FDecaMoveSDKModule::SetupMove()
                 ctx->tripleClicked = true;
                 break;
         }
+        ctx->lock.unlock();
 
     };
     callbacks.battery_update_cb = [](float charge, void* userData)
@@ -108,18 +98,27 @@ void FDecaMoveSDKModule::SetupMove()
     };
     callbacks.orientation_update_cb = [](deca_move_quaternion quat, deca_move_accuracy accuracy, float yawCalibration, void* userData)
     {
-        ((MoveContext*)userData)->rotation = DecaToUnreal(quat);
-        ((MoveContext*)userData)->yawOffset = yawCalibration;
-        //UE_LOG(LogTemp, Log, TEXT("Orientation: %.2f %.2f %.2f %.2f yaw=%.2f [%d]\n"), quat.x, quat.y, quat.z, quat.w, yawCalibration, int(accuracy));
+        MoveContext* ctx = (MoveContext*)userData;
+        ctx->lock.lock();
+        ctx->rotation = DecaToUnreal(quat);
+        ctx->yawOffset = yawCalibration;
+        ctx->lock.unlock();
+        UE_LOG(LogTemp, Log, TEXT("Orientation: %.2f %.2f %.2f %.2f yaw=%.2f [%d]\n"), quat.x, quat.y, quat.z, quat.w, yawCalibration, int(accuracy));
     };
     callbacks.position_update_cb = [](float position_x, float position_y, float position_z, void* userData)
     {
-        ((MoveContext*)userData)->position = FVector(position_x, position_y, position_z);
+        MoveContext* ctx = (MoveContext*)userData;
+        ctx->lock.lock();
+        ctx->position = FVector(position_x, position_y, position_z);
+        ctx->lock.unlock();
         //UE_LOG(LogTemp, Log, TEXT("Position: %.2f %.2f %.2f\n"), position_x, position_y, position_z);
     };
     callbacks.state_update_cb = [](deca_move_state state, void* userData)
     {
-        ((MoveContext*)userData)->state = state;
+        MoveContext* ctx = (MoveContext*)userData;
+        ctx->lock.lock();
+        ctx->state = state;
+        ctx->lock.unlock();
         //UE_LOG(LogTemp, Log, TEXT("State: %d\n"), state);
     };
     callbacks.imu_calibration_request_cb = [](void* userData)
@@ -162,7 +161,8 @@ void FDecaMoveSDKModule::SetupMove()
     
 
     move = nullptr;
-    auto status = decaMoveInit(envDesc, callbacks, &move);
+    deca_move_status status;
+    status = decaMoveInit(envDesc, callbacks, &move);
     if (status == kDecaMoveStatusSuccess)
     {
         UE_LOG(LogTemp, Log, TEXT("Deca Move sucessfully set up"));
@@ -183,69 +183,107 @@ FQuat FDecaMoveSDKModule::DecaToUnreal(const deca_move_quaternion& value)
 void FDecaMoveSDKModule::CleanUpMove()
 {
     decaMoveRelease(move);
+    move = nullptr;
 }
 
 
 FRotator FDecaMoveSDKModule::GetMoveRotation()
 {
+    UE_LOG(LogTemp, Warning, TEXT("Getting move rotation\n"));
+
     FRotator o = FRotator(FQuat(FVector(0, 0, 1), _moveContext.yawOffset) * _moveContext.rotation);
     return o;
 };
 
 float FDecaMoveSDKModule::GetMoveYawOffset()
 {
-    return _moveContext.yawOffset;
+    _moveContext.lock.lock();
+    auto value = _moveContext.yawOffset;
+    _moveContext.lock.unlock();
+    return value;
 }
 
 FQuat FDecaMoveSDKModule::GetMoveRawRotation()
 {
-    return _moveContext.rotation;
+    _moveContext.lock.lock();
+    auto value = _moveContext.rotation;
+    _moveContext.lock.unlock();
+    return value;
 };
 
 FVector FDecaMoveSDKModule::GetMovePosition()
 {
-    return _moveContext.position;
+    _moveContext.lock.lock();
+    auto value = _moveContext.position;
+    _moveContext.lock.unlock();
+    return value;
 }
 
 deca_move_state FDecaMoveSDKModule::GetMoveState()
 {
-    return _moveContext.state;
+    _moveContext.lock.lock();
+    auto value = _moveContext.state;
+    _moveContext.lock.unlock();
+    return value;
 }
 
 bool FDecaMoveSDKModule::IsMoveSleeping()
 {
-    return _moveContext.isSleeping;
+    _moveContext.lock.lock();
+    auto value = _moveContext.isSleeping;
+    _moveContext.lock.unlock();
+    return value;
 }
 
 void FDecaMoveSDKModule::CalibrateMove(float forwardX, float forwardY)
 {
     decaMoveCalibrate(move, forwardX, -forwardY);
+
 }
 
 void FDecaMoveSDKModule::SendHaptic()
 {
+
     decaMoveSendHaptic(move);
 }
 
 bool FDecaMoveSDKModule::GetIfMoveSingleClicked()
 {
+    _moveContext.lock.lock();
     bool o = _moveContext.singleClicked;
     _moveContext.singleClicked = false;
+    _moveContext.lock.unlock();
     return o;
 }
 
 bool FDecaMoveSDKModule::GetIfMoveDoubleClicked()
 {
+    _moveContext.lock.lock();
     bool o = _moveContext.doubleClicked;
     _moveContext.doubleClicked = false;
+    _moveContext.lock.unlock();
     return o;
 }
 
 bool FDecaMoveSDKModule::GetIfMoveTripleClicked()
 {
+    _moveContext.lock.lock();
     bool o = _moveContext.tripleClicked;
     _moveContext.tripleClicked = false;
+    _moveContext.lock.unlock();
     return o;
+}
+
+FDecaMoveSDKModule::MoveContext::MoveContext()
+{
+    state = kDecaMoveStateClosed;
+    isSleeping = true;
+    position = FVector(0, 0, 0);
+    rotation = FQuat(0, 0, 0, 1);
+    yawOffset = 0;
+    singleClicked = false;
+    doubleClicked = false;
+    tripleClicked = false;
 }
 
 
@@ -253,13 +291,3 @@ bool FDecaMoveSDKModule::GetIfMoveTripleClicked()
 	
 IMPLEMENT_MODULE(FDecaMoveSDKModule, DecaMoveSDK)
 
-void UDecaMoveLoadSubsystem::Initialize(FSubsystemCollectionBase& Collection)
-{
-    FDecaMoveSDKModule::LinkDll();
-}
-
-void UDecaMoveLoadSubsystem::Deinitialize()
-{
-    FDecaMoveSDKModule::ReleaseDll();
-
-}

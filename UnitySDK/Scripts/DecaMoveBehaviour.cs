@@ -56,7 +56,7 @@ namespace DecaSDK
         public bool sleeping => _sleeping;
         private bool _sleeping = true;
 
-        private Move decaMove;
+        private SharedDisposable<SharedMove> _decaMove;
         // Event callbacks are on another thread so we need to store them until we can process them from the main thread
         private Queue<Move.Feedback> eventQueue = new Queue<Move.Feedback>();
 
@@ -117,7 +117,10 @@ namespace DecaSDK
                         _position = new Vector3(x, y, z);
                     }
                 };
-                decaMove = new Move(OnFeedback, OnBatteryUpdate, OnOrientationUpdate, OnPositionUpdate, OnStateUpdate, OnImuCalibrationRequest, OnLogMessage);
+
+
+                _decaMove = SharedMove.Instance;
+                _decaMove.Value.AddCallbacks(OnFeedback, OnBatteryUpdate, OnOrientationUpdate, OnPositionUpdate, OnStateUpdate, OnImuCalibrationRequest, OnLogMessage);
             }
             catch (Exception e)
             {
@@ -171,7 +174,11 @@ namespace DecaSDK
         {
             try
             {
-                decaMove.Dispose();
+                if(_decaMove != null)
+                {
+                    _decaMove.Dispose();
+                    _decaMove = null;
+                }
             }
             catch (Exception e)
             {
@@ -183,7 +190,7 @@ namespace DecaSDK
         { 
             try
             {
-                decaMove.SendHaptic();
+                _decaMove.Value.SendHaptic();
             }
             catch (DecaSDK.Move.NativeCallFailedException e)
             {
@@ -201,7 +208,7 @@ namespace DecaSDK
                 if (transform.parent)
                     parentRotationOffset = Quaternion.Inverse(transform.parent.rotation);
                 Vector3 headForward = parentRotationOffset * head.forward;
-                decaMove.Calibrate(headForward.x, headForward.z);
+                _decaMove.Value.Calibrate(headForward.z, headForward.x);
             }
             catch (DecaSDK.Move.NativeCallFailedException e)
             {

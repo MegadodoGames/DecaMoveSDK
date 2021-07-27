@@ -5,12 +5,11 @@
 #include "Modules/ModuleManager.h"
 #include "Delegates/Delegate.h"
 #include "include/move.h"
-#include "Subsystems/GameInstanceSubsystem.h"
 #include "Math/Vector.h"
 #include "Math/Quat.h"
-#include <atomic>
+#include <mutex>   
 #include <queue>
-#include "DecaMoveSDK.generated.h"
+
 
 
 class FDecaMoveSDKModule : public IModuleInterface
@@ -25,14 +24,16 @@ private:
 	struct MoveContext
 	{
 		// Since these are updated by background threads they all need to be thread safe
-		std::atomic<deca_move_state> state = kDecaMoveStateClosed;
-		std::atomic<bool> isSleeping = true;
-		std::atomic<FVector> position = FVector(0,0,0);
-		std::atomic<FQuat> rotation = FQuat(0,0,0,1);
-		std::atomic<float> yawOffset = 0;
-		std::atomic<bool> singleClicked = false;
-		std::atomic<bool> doubleClicked = false;
-		std::atomic<bool> tripleClicked = false;
+		deca_move_state state;
+		bool isSleeping;
+		FVector position;
+		FQuat rotation;
+		float yawOffset;
+		bool singleClicked;
+		bool doubleClicked;
+		bool tripleClicked;
+		std::mutex lock;
+		MoveContext();
 	};
 
 	static MoveContext _moveContext;
@@ -45,8 +46,8 @@ public:
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-	static void LinkDll();
-	static void ReleaseDll();
+	static void StartSDK();
+	static void ReleaseSDK();
 
 	static FRotator GetMoveRotation();
 	static FQuat GetMoveRawRotation();
@@ -63,16 +64,5 @@ public:
 	static bool GetIfMoveTripleClicked();
 };
 
-UCLASS()
-class UDecaMoveLoadSubsystem : public UGameInstanceSubsystem
-{
-	GENERATED_BODY()
-public:
-	// Begin USubsystem
-	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
-	virtual void Deinitialize() override;
-	// End USubsystem
-private:
-	// All my variables
-};
+
 

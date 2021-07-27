@@ -12,7 +12,6 @@
 	"SupportURL": "",
 	"EngineVersion": "4.26.0",
 	"CanContainContent": true,
-	"IsBetaVersion": true,
 	"Installed": true,
 	"Modules": [
 		{
@@ -21,7 +20,7 @@
 			"LoadingPhase": "Default",
 			"WhitelistPlatforms": [
 				"Win64",
-				"Win32"
+				"Android"
 			]
 		}
 	]

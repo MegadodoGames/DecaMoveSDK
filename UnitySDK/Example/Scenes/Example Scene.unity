@@ -331,6 +331,11 @@ PrefabInstance:
       propertyPath: head
       value: 
       objectReference: {fileID: 1457454846}
+    - target: {fileID: 2528709496806383154, guid: 8e4b04d8d1e38dc48b49e723feb9934c,
+        type: 3}
+      propertyPath: onlyRotateY
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2528709496806383155, guid: 8e4b04d8d1e38dc48b49e723feb9934c,
         type: 3}
       propertyPath: m_Name

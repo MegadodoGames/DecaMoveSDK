@@ -2,9 +2,9 @@
 
 #pragma once
 
-#include "DecaMoveSDK.h"
 #include "Core.h"
 #include "CoreMinimal.h"
+#include "DecaMoveSDK.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "DecaMoveBlueprintFunctionLibrary.generated.h"
 
@@ -47,8 +47,5 @@ public:
 		static bool GetIfDecaMoveDoubleClicked();
 	UFUNCTION(BlueprintCallable, Category = "DecaMove")
 		static bool GetIfDecaMoveTripleClicked();
-
-	
-
 };
 

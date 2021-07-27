@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (c) 2020 Isara Technologies. All Rights Reserved. -->
+<!--GearVR plugin additions-->
+<root xmlns:android="http://schemas.android.com/apk/res/android">
+	<!-- init section is always evaluated once per architecture -->
+	<init>
+		<log text="UEDecaSDK init"/>
+	</init>
+
+	<androidManifestUpdates>
+
+	</androidManifestUpdates>
+
+	<!-- optional additions to proguard -->
+	<proguardAdditions>
+		<insert>
+			<![CDATA[
+      -keepattributes Signature
+      -dontskipnonpubliclibraryclassmembers
+
+     -keep class com.epicgames.ue4.GameActivity { *; }
+     -keep class com.megadodo.** { *; }
+    ]]>
+		</insert>
+	</proguardAdditions>
+
+	<buildGradleAdditions>
+		<insert>
+			<![CDATA[
+    ]]>
+		</insert>
+	</buildGradleAdditions>
+
+	<AARImports>
+		<insertValue value="repository $S(PluginDir)/android"/>
+		<insertNewline/>
+		<insert>com.megadodo,decasdk,1.0.0</insert>
+		<insertNewline/>
+	</AARImports>
+
+	<resourceCopies>
+		<copyFile src="$S(PluginDir)/android/kotlin-stdlib-1.4.31.jar" dst="$S(BuildDir)/libs/kotlin-stdlib-1.4.31.jar" />
+	</resourceCopies>
+
+	<soLoadLibrary>
+		<loadLibrary name="deca_sdk" failmsg="DecaSDK library not loaded and required!" />
+	</soLoadLibrary>
+
+</root>

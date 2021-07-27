@@ -7,24 +7,36 @@ public class DecaMoveSDKLibrary : ModuleRules
 {
 	public DecaMoveSDKLibrary(ReadOnlyTargetRules Target) : base(Target)
 	{
+		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		Type = ModuleType.External;
 		bEnableExceptions = true;
+		// Add include
+
+		PublicDependencyModuleNames.AddRange(
+			new string[]
+			{
+				"Core",
+				"Projects"
+			}
+		);
+		PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "include"));
+
 		if (Target.Platform == UnrealTargetPlatform.Win64)
 		{
-			// Add include
-			PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "include"));
-
-			// Add the import library
-			//PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "x64", "release", "deca_sdk.dll"));
-
-			// Delay-load the DLL, so we can load it from the right place first
 			PublicDelayLoadDLLs.Add("deca_move.dll");
-
-			// Ensure that the DLL is staged along with the executable
 			RuntimeDependencies.Add("$(PluginDir)/Binaries/Win64/deca_sdk.dll", Path.Combine(ModuleDirectory, "bin", "deca_sdk.dll"));
-			 
-			// Load .lib
 			PublicAdditionalLibraries.Add(Path.Combine(ModuleDirectory, "lib", "deca_sdk.lib"));
 		}
+        else if(Target.Platform == UnrealTargetPlatform.Android)
+        {
+			string PluginPath = Utils.MakePathRelativeTo(ModuleDirectory, Target.RelativeEnginePath);
+			string AndroidPluginUPL = Path.Combine(PluginPath, "DecaMove.xml");
+			AdditionalPropertiesForReceipt.Add("AndroidPlugin", AndroidPluginUPL);
+
+			string libDir = Path.Combine(ModuleDirectory, "android");
+			PublicAdditionalLibraries.Add(Path.Combine(libDir, "libdeca_sdk.so"));
+			PublicAdditionalLibraries.Add(Path.Combine(libDir, "libzmq.so"));
+		}
+		
 	}
 }
